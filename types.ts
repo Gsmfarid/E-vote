@@ -1,11 +1,4 @@
 
-export interface PoliticalParty {
-  id: string;
-  name: string;
-  symbol: string;
-  color: string;
-}
-
 export interface Candidate {
   id: string;
   name: string;
@@ -13,7 +6,14 @@ export interface Candidate {
   partyId: string;
   symbol: string;
   manifesto: string;
-  region: string; // The specific seat or ward
+  region: string;
+}
+
+export interface PoliticalParty {
+  id: string;
+  name: string;
+  symbol: string;
+  color: string;
 }
 
 export interface Election {
@@ -34,9 +34,8 @@ export interface VoterProfile {
   division: string;
   district: string;
   upazila: string;
-  union: string;
   ward: string;
-  constituency: string; // e.g., "ঢাকা-১০"
+  constituency: string;
 }
 
 export enum AppStep {
