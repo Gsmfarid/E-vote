@@ -1,0 +1,7 @@
+{
+  "name": "E-Vote Bangladesh 2026",
+  "description": "A state-of-the-art digital voting system for Bangladesh featuring NID integration, biometric verification, and single boarding system for 2026 elections.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
