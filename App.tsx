@@ -7,6 +7,7 @@ import NIDVerification from './components/NIDVerification';
 import FaceVerification from './components/FaceVerification';
 import Dashboard from './components/Dashboard';
 import BallotBox from './components/BallotBox';
+import ElectionRegistration from './components/ElectionRegistration';
 import Results from './components/Results';
 import SuccessScreen from './components/SuccessScreen';
 import VoterEducation from './components/VoterEducation';
@@ -38,9 +39,7 @@ const App: React.FC = () => {
   ]);
 
   const handleNIDSubmit = async (fullProfile: any) => {
-    // ডাটাবেজ থেকে চেক করা যে এই NID আগে ভোট দিয়েছে কি না
     const alreadyVoted = await db.hasAlreadyVoted(fullProfile.nid);
-    
     setVoter({
       ...fullProfile,
       isVerified: false,
@@ -59,6 +58,11 @@ const App: React.FC = () => {
   const handleSelectElection = (election: Election) => {
     setCurrentElection(election);
     setStep(AppStep.BALLOT);
+  };
+
+  const handleRegisterElection = (election: Election) => {
+    setCurrentElection(election);
+    setStep(AppStep.ELECTION_REGISTRATION);
   };
 
   const handleVoteSubmit = async (candidateId: string, partyId: string) => {
@@ -86,8 +90,29 @@ const App: React.FC = () => {
         {step === AppStep.LANDING && <Landing onStart={() => setStep(AppStep.NID_ENTRY)} onEducation={navigateToEducation} />}
         {step === AppStep.NID_ENTRY && <NIDVerification onSubmit={handleNIDSubmit} />}
         {step === AppStep.FACE_VERIFY && <FaceVerification onComplete={handleVerificationComplete} />}
-        {step === AppStep.DASHBOARD && voter && <Dashboard voter={voter} elections={elections} onSelectElection={handleSelectElection} onViewResults={() => setStep(AppStep.RESULTS)} onEducation={navigateToEducation} />}
+        
+        {step === AppStep.DASHBOARD && voter && (
+          <Dashboard 
+            voter={voter} 
+            elections={elections} 
+            onSelectElection={handleSelectElection} 
+            onRegisterElection={handleRegisterElection}
+            onViewResults={() => setStep(AppStep.RESULTS)} 
+            onEducation={navigateToEducation} 
+          />
+        )}
+        
         {step === AppStep.BALLOT && currentElection && voter && <BallotBox election={currentElection} voter={voter} onVote={handleVoteSubmit} onCancel={() => setStep(AppStep.DASHBOARD)} />}
+        
+        {step === AppStep.ELECTION_REGISTRATION && currentElection && voter && (
+          <ElectionRegistration 
+            election={currentElection} 
+            voter={voter} 
+            onSuccess={() => setStep(AppStep.DASHBOARD)} 
+            onCancel={() => setStep(AppStep.DASHBOARD)} 
+          />
+        )}
+
         {step === AppStep.SUCCESS && <SuccessScreen onGoBack={() => setStep(AppStep.DASHBOARD)} />}
         {step === AppStep.RESULTS && <Results onBack={() => setStep(AppStep.DASHBOARD)} />}
         {step === AppStep.VOTER_EDUCATION && <VoterEducation onBack={() => setStep(previousStep)} />}

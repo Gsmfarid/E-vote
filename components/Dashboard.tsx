@@ -1,16 +1,28 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { VoterProfile, Election } from '../types';
+import { db } from '../services/DatabaseService';
 
 interface DashboardProps {
   voter: VoterProfile;
   elections: Election[];
   onSelectElection: (election: Election) => void;
+  onRegisterElection: (election: Election) => void;
   onViewResults: () => void;
   onEducation: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ voter, elections, onSelectElection, onViewResults, onEducation }) => {
+const Dashboard: React.FC<DashboardProps> = ({ voter, elections, onSelectElection, onRegisterElection, onViewResults, onEducation }) => {
+  const [registrations, setRegistrations] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchRegs = async () => {
+      const data = await db.getVoterRegistrations(voter.nid);
+      setRegistrations(data.map(r => r.electionId));
+    };
+    fetchRegs();
+  }, [voter.nid]);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700">
       <div className="bg-[#006a4e] text-white p-8 rounded-3xl shadow-lg flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-8">
@@ -57,29 +69,58 @@ const Dashboard: React.FC<DashboardProps> = ({ voter, elections, onSelectElectio
           <span>আপনার এলাকার নির্বাচনসমূহ</span>
         </h3>
         <div className="grid grid-cols-1 gap-4">
-          {elections.map(election => (
-            <div key={election.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-[#006a4e]/30 transition group">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className={`w-2 h-2 rounded-full ${election.status === 'ongoing' ? 'bg-red-500 animate-pulse' : 'bg-blue-500'}`}></span>
-                    <span className="text-xs font-bold uppercase text-slate-400">{election.level === 'national' ? 'জাতীয়' : 'স্থানীয়'} • {election.status === 'ongoing' ? 'ভোট চলছে' : 'আসন্ন'}</span>
-                  </div>
-                  <h4 className="text-xl font-bold text-slate-800 group-hover:text-[#006a4e] transition">{election.title}</h4>
-                  <p className="text-slate-500 text-sm mt-1">{election.description}</p>
-                </div>
-                <div className="flex items-center gap-6 w-full md:w-auto border-t md:border-t-0 pt-4 md:pt-0">
-                    <div className="text-right hidden sm:block">
-                        <p className="text-xs text-slate-400 mb-1">তারিখ</p>
-                        <p className="font-bold text-slate-700">{election.date}</p>
+          {elections.map(election => {
+            const isOngoing = election.status === 'ongoing';
+            const isRegistered = registrations.includes(election.id);
+
+            return (
+              <div key={election.id} className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 hover:border-[#006a4e]/30 transition group">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div>
+                    <div className="flex items-center space-x-2 mb-2">
+                      <span className={`w-2 h-2 rounded-full ${isOngoing ? 'bg-red-500 animate-pulse' : 'bg-blue-500'}`}></span>
+                      <span className="text-xs font-bold uppercase text-slate-400">
+                        {election.level === 'national' ? 'জাতীয়' : 'স্থানীয়'} • {isOngoing ? 'ভোট চলছে' : 'আসন্ন'}
+                      </span>
+                      {isRegistered && !isOngoing && (
+                        <span className="bg-blue-100 text-blue-700 text-[10px] font-extrabold px-2 py-0.5 rounded ml-2">নিবন্ধিত</span>
+                      )}
                     </div>
-                    <button onClick={() => onSelectElection(election)} disabled={voter.hasVoted} className={`flex-grow md:flex-none ${voter.hasVoted ? 'bg-slate-100 text-slate-400' : 'bg-[#006a4e] text-white hover:bg-[#005a42]'} px-8 py-3 rounded-xl font-bold transition shadow-sm`}>
-                        {voter.hasVoted ? 'ভোট দেওয়া হয়েছে' : 'ভোট দিন'}
-                    </button>
+                    <h4 className="text-xl font-bold text-slate-800 group-hover:text-[#006a4e] transition">{election.title}</h4>
+                    <p className="text-slate-500 text-sm mt-1">{election.description}</p>
+                  </div>
+                  <div className="flex items-center gap-6 w-full md:w-auto border-t md:border-t-0 pt-4 md:pt-0">
+                      <div className="text-right hidden sm:block">
+                          <p className="text-xs text-slate-400 mb-1">তারিখ</p>
+                          <p className="font-bold text-slate-700">{election.date}</p>
+                      </div>
+                      
+                      {isOngoing ? (
+                        <button 
+                          onClick={() => onSelectElection(election)} 
+                          disabled={voter.hasVoted} 
+                          className={`flex-grow md:flex-none ${voter.hasVoted ? 'bg-slate-100 text-slate-400' : 'bg-[#006a4e] text-white hover:bg-[#005a42]'} px-8 py-3 rounded-xl font-bold transition shadow-sm`}
+                        >
+                          {voter.hasVoted ? 'ভোট দেওয়া হয়েছে' : 'ভোট দিন'}
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => onRegisterElection(election)} 
+                          disabled={isRegistered}
+                          className={`flex-grow md:flex-none px-8 py-3 rounded-xl font-bold transition shadow-sm ${
+                            isRegistered 
+                              ? 'bg-blue-50 text-blue-400 border border-blue-100 cursor-default' 
+                              : 'bg-blue-600 text-white hover:bg-blue-700'
+                          }`}
+                        >
+                          {isRegistered ? 'নিবন্ধিত' : 'নিবন্ধন করুন'}
+                        </button>
+                      )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
     </div>

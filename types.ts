@@ -25,6 +25,15 @@ export interface Election {
   level: 'national' | 'local' | 'union';
 }
 
+export interface ElectionRegistration {
+  nid: string;
+  electionId: string;
+  electionTitle: string;
+  electionDate: string;
+  constituency: string;
+  timestamp: number;
+}
+
 export interface VoterProfile {
   nid: string;
   name: string;
@@ -46,5 +55,6 @@ export enum AppStep {
   BALLOT = 'BALLOT',
   SUCCESS = 'SUCCESS',
   RESULTS = 'RESULTS',
-  VOTER_EDUCATION = 'VOTER_EDUCATION'
+  VOTER_EDUCATION = 'VOTER_EDUCATION',
+  ELECTION_REGISTRATION = 'ELECTION_REGISTRATION'
 }
